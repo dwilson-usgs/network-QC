@@ -8,31 +8,32 @@ There have also been improvements and additions to the Matlab version.
 
 ---------------------------------------------------------
 * NetQCamps.py
-
+```
 usage: NetQCamps.py [-h] -nets NETS [-stas STAS] [-chans CHANS]
                     [-minlat MINLAT] [-maxlat MAXLAT] [-minlon MINLON]
                     [-maxlon MAXLON] [-n NET] [-s STA] [-r RAD] [-t1 TIME]
                     [-t2 TIME2]
-
+```
 Check station amplitudes relative to other local stations
 
 optional arguments:
-  -h, --help      show this help message and exit
-  -nets NETS      Networks for analysis
-  -stas STAS      Stations for analysis
-  -chans CHANS    Channels for analysis
-  -minlat MINLAT  Min Latitude for QC
-  -maxlat MAXLAT  Max Latitude for QC
-  -minlon MINLON  Min Longitude for QC
-  -maxlon MAXLON  Max Longitude for QC
-  -n NET          Option to specify net individual station. If your use this
-                  flag, you must also use the -s flag.
-  -s STA          Option to specify individual station
-  -r RAD          Option to specify radius from individual station
-  -t1 TIME        Start Time for analysis (default is 24hrs ago)
-  -t2 TIME2       End Time for analysis (default is now)
-
+```
+   -h, --help      show this help message and exit
+   -nets NETS      Networks for analysis
+   -stas STAS      Stations for analysis
+   -chans CHANS    Channels for analysis
+   -minlat MINLAT  Min Latitude for QC
+   -maxlat MAXLAT  Max Latitude for QC
+   -minlon MINLON  Min Longitude for QC
+   -maxlon MAXLON  Max Longitude for QC
+   -n NET          Option to specify net individual station. If your use this flag, you must also use the -s flag.
+   -s STA          Option to specify individual station
+   -r RAD          Option to specify radius from individual station
+   -t1 TIME        Start Time for analysis (default is 24hrs ago)
+   -t2 TIME2       End Time for analysis (default is now)
+```
 Examples:
+
     To check amplitudes of newly installed aftershock stations:
     python3 NetQCamps.py -nets GS -t1 2016-10-01 -t2 2016-10-02 -minlat 36 -maxlat 37 -minlon -97.5 -maxlon -96.2
 
