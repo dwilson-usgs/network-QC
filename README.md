@@ -26,9 +26,11 @@ optional arguments:
    -maxlat MAXLAT  Max Latitude for QC
    -minlon MINLON  Min Longitude for QC
    -maxlon MAXLON  Max Longitude for QC
-   -n NET          Option to specify net individual station. If your use this flag, you must also use the -s flag.
+   -n NET          Option to specify net individual station. If your use this flag,
+                        you must also use the -s flag.
    -s STA          Option to specify individual station
-   -r RAD          Option to specify radius from individual station
+   -r RAD          Option to specify radius (in degrees) from individual station when using
+                        the -n and -s flags (default is 3 degrees)
    -t1 TIME        Start Time for analysis (default is 24hrs ago)
    -t2 TIME2       End Time for analysis (default is now)
 ```

@@ -93,7 +93,7 @@ parser.add_argument("-n", action="store", dest="Net",
 parser.add_argument("-s", action="store", dest="Sta",
                     default=999, help="Option to specify individual station")
 parser.add_argument("-r", action="store", dest="Rad",
-                    default=3, help="Option to specify radius from individual station")
+                    default=3, help="Option to specify radius (in degrees) from individual station when using the -n and -s flags (default is 3 degrees)")
 
 parser.add_argument("-t1", action="store", dest="Time",
                     default=999,  help="Start Time for analysis (default is 24hrs ago)")
