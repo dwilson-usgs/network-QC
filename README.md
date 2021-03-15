@@ -19,9 +19,9 @@ Check station amplitudes relative to other local stations
 optional arguments:
 ```
    -h, --help      show this help message and exit
-   -nets NETS      Networks for analysis
-   -stas STAS      Stations for analysis
-   -chans CHANS    Channels for analysis
+   -nets NETS      Networks for analysis (required)
+   -stas STAS      Stations for analysis (default is *)
+   -chans CHANS    Channels for analysis (default is LH*)
    -minlat MINLAT  Min Latitude for QC
    -maxlat MAXLAT  Max Latitude for QC
    -minlon MINLON  Min Longitude for QC
@@ -40,7 +40,7 @@ Examples:
     python3 NetQCamps.py -nets GS -t1 2016-10-01 -t2 2016-10-02 -minlat 36 -maxlat 37 -minlon -97.5 -maxlon -96.2
 
     To check amplitudes of stations in the vicinity of station N4-G62A over the last 24 hours:
-    python3 NetQCamps.py -nets N4,US,NE -n N4 -s G62A
+    python3 NetQCamps.py -nets N4,US,NE -n N4 -s G62A -r 2
 
 ---------------------------------------------------------
 

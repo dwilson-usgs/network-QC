@@ -71,11 +71,11 @@ def get_meds(zn,zla,zlo,nsta=5):
 parser = argparse.ArgumentParser(description='Check station amplitudes relative to other local stations')
 
 parser.add_argument("-nets", action="store", dest="Nets",
-                    required=True, help="Networks for analysis")
+                    required=True, help="Networks for analysis (required)")
 parser.add_argument("-stas", action="store", dest="Stas",
-                    default="*", help="Stations for analysis")
+                    default="*", help="Stations for analysis (default is *)")
 parser.add_argument("-chans", action="store", dest="Chans",
-                    default="LH*", help="Channels for analysis")
+                    default="LH*", help="Channels for analysis (default is LH*)")
 
 parser.add_argument("-minlat", action="store", dest="MinLat",
                     default=-90, help="Min Latitude for QC")
@@ -308,10 +308,12 @@ if 1:
         ax.set_xlim(left=xx[0],right=np.max((xx[1],12.)))
         ax.set_yticklabels([''])
         #plt.xlabel('Longitude')
-        plt.xlabel('Microseismic amp relative to local average')
+        
         
         plt.grid()
         plt.legend(loc='upper left')
+    plt.xlabel('Microseismic amp relative to local average')
+    plt.title('outliers')
         #plt.show()
 
 if 1:
