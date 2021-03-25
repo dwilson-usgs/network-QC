@@ -18,11 +18,14 @@ from matplotlib import cm
 #import gc
 #from numba import jit
 from matplotlib.transforms import blended_transform_factory
+import matplotlib.patches as mpatches
 #from scipy.optimize import leastsq
 import cartopy.crs as ccrs
 import matplotlib.ticker as mticker
 import cartopy
-
+from cartopy import geodesic
+import shapely
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import argparse
 
 def process_stream(st):
@@ -126,7 +129,8 @@ if tt2==999:
 else:
     endtime=UTCDateTime(tt2)
 
-
+plotrad=False
+plotbox=False
 #try:
 #    xmlf = read_inventory(fil)
 #except:
@@ -169,10 +173,11 @@ fmax=1/4.
 
 
 if net1 != 999:
+    plotrad=True
     if sta1 != 999:
         inv1=client.get_stations(network=net1,station=sta1,starttime=starttime, endtime=endtime)
         inventory = client.get_stations(network=nets,station=stas,starttime=starttime, endtime=endtime,
-                                    maxradius=rad,latitude=inv1[0][0].latitude,longitude=inv1[0][0].longitude,channel=chans, level="response")
+                                    maxradius=np.float(rad),latitude=inv1[0][0].latitude,longitude=inv1[0][0].longitude,channel=chans, level="response")
     else:
         sys.exit("You must specify both -n and -s for the individual station option.")
 else:
@@ -277,7 +282,7 @@ if 1:
 
 if 1:
     fig=plt.figure(num=5, figsize=(8,8))
-    
+    grid = plt.GridSpec(1, 3, wspace=0.4, hspace=0.3)
     nn=0
     #transform = blended_transform_factory(ax.transData, ax.transAxes)
     #transform = blended_transform_factory(ax.transAxes,ax.transData)
@@ -292,28 +297,51 @@ if 1:
                 (h2meds[n] < .55) or (h2meds[n] > 1/.55)):    
             nn=nn+1
             if nn==1:
+                plt.subplot(grid[0, 0])
+                plt.plot( np.max((.0,zmeds[n])),-nn,'kd',markersize=8,linewidth=4)
+                plt.plot( np.max((.0,h1meds[n])),-nn,'g+',markersize=8,linewidth=4)
+                plt.plot( np.max((.0,h2meds[n])),-nn,'bx',markersize=8,linewidth=4)
+                plt.subplot(grid[0, 1:])
                 plt.semilogx( np.max((.04,zmeds[n])),-nn,'kd',markersize=8,linewidth=4,label='vertical')
                 plt.semilogx( np.max((.04,h1meds[n])),-nn,'g+',markersize=8,linewidth=4,label='h1')
                 plt.semilogx( np.max((.04,h2meds[n])),-nn,'bx',markersize=8,linewidth=4,label='h2')
             else:
+                plt.subplot(grid[0, 0])
+                plt.plot( np.max((.0,zmeds[n])),-nn,'kd',markersize=8,linewidth=4)
+                plt.plot( np.max((.0,h1meds[n])),-nn,'g+',markersize=8,linewidth=4)
+                plt.plot( np.max((.0,h2meds[n])),-nn,'bx',markersize=8,linewidth=4)
+                plt.subplot(grid[0, 1:])
                 plt.semilogx( np.max((.04,zmeds[n])),-nn,'kd',markersize=8,linewidth=4)
                 plt.semilogx( np.max((.04,h1meds[n])),-nn,'g+',markersize=8,linewidth=4)
                 plt.semilogx( np.max((.04,h2meds[n])),-nn,'bx',markersize=8,linewidth=4)
-            ax = fig.axes[0]
-            ax.text(10,-nn, zstats[n], rotation=0,
+            ax = fig.axes[1]
+            ax.text(.9,-nn, zstats[n], rotation=0,
                 va="center", ha="right" ,zorder=10)
             #labels.append(zstats[n])
     if nn>0:
         xx=ax.get_xlim()
-        ax.set_xlim(left=xx[0],right=np.max((xx[1],12.)))
+        ax.set_xlim(left=1,right=np.max((xx[1],5.)))
         ax.set_yticklabels([''])
+        plt.grid()
+        ax0 = fig.axes[0]
+        ax0.set_xlim(left=-.1,right=.75)
+        ax0.set_yticklabels([''])
+        #plt.subplot(grid[0, 0])
+        #plt.ylabel([''])
+        #plt.xlim([-.1 ,1])
         #plt.xlabel('Longitude')
-        
+        plt.subplot(grid[0, 0])
+        plt.title('low outliers')
+        plt.subplot(grid[0, 1:])
         
         plt.grid()
         plt.legend(loc='upper left')
-    plt.xlabel('Microseismic amp relative to local average')
-    plt.title('outliers')
+        plt.title('high outliers')
+        plt.xlabel('Microseismic amp relative to local average')
+    else:
+        plt.xlabel('Microseismic amp relative to local average')
+        plt.title('no outliers to plot')
+    
         #plt.show()
 
 if 1:
@@ -322,7 +350,11 @@ if 1:
     #z=np.asarray(20*np.log10(znoise))
     z=np.asarray(znoise/zmeds)
     #extent=[np.min(y)-.2, np.min(x)-.2, np.max(y)+.2, np.max(x)+.2]
-    extent=[np.min(x)-.2, np.max(x)+.2, np.min(y)-.2, np.max(y)+.2]
+    dx=(np.max(x)-np.min(x))/10
+    dy=(np.max(y)-np.min(y))/10
+    ldx=np.round(dx*20)/10
+    ldy=np.round(dy*20)/10
+    extent=[np.min(x)-dx, np.max(x)+dx, np.min(y)-dy, np.max(y)+dy]
     central_lon = np.median(x)
     central_lat = np.median(y)
     nbins=300
@@ -337,9 +369,11 @@ if 1:
     
 if 1:
     
-    c1=min(z)
-    c2=max(z)
+    c1=np.min(z)
+    c2=np.max(z)
     if c2>c1:
+        c1-=np.min(z)/20
+        c2+=np.max(z)/20
         plt.figure(7, figsize=(6,6))
         #c1=-145
         #c2=-111
@@ -357,13 +391,20 @@ if 1:
         matplotlib.rcParams['xtick.direction'] = 'out'
         matplotlib.rcParams['ytick.direction'] = 'out'
         #print(xi.shape,c1,c2)
-        plt.contourf(xi, yi, zi.reshape(xi.shape), np.arange(c1, c2, (c2-c1)/10), cmap=plt.cm.plasma, transform=ccrs.PlateCarree() )
+        plt.contourf(xi, yi, zi.reshape(xi.shape), np.arange(c1, c2+(c2-c1)/20, (c2-c1)/20), cmap=plt.cm.plasma, transform=ccrs.PlateCarree() )
+        if plotrad:
+            print([inv1[0][0].longitude,inv1[0][0].latitude,rad])
+            circle_points = geodesic.Geodesic().circle(lon=inv1[0][0].longitude, lat=inv1[0][0].latitude, radius=np.float(rad)*111.1949*1000, n_samples=360, endpoint=False)
+            geom = shapely.geometry.Polygon(circle_points)
+            ax.add_geometries((geom,), crs=cartopy.crs.PlateCarree(), edgecolor='b',linestyle='--',facecolor='')
+
         gridlines=ax.gridlines(draw_labels=True, color='gray', alpha=.8, linestyle=':')
         gridlines.xlabels_top=False
         gridlines.ylabels_right=False
-        gridlines.xlocator = mticker.FixedLocator(np.arange(np.floor(np.min(x)-.2), np.ceil(np.max(x)+.2),2))
-        gridlines.ylocator = mticker.FixedLocator(np.arange(np.floor(np.min(y)-.2), np.ceil(np.max(y)+.2),2))
-
+        #gridlines.xlocator = mticker.FixedLocator(np.arange(np.floor((np.min(x)-ldx)*10)/10, np.ceil((np.max(x)+ldx)*10)/10 +ldx,ldx))
+        #ridlines.ylocator = mticker.FixedLocator(np.arange(np.floor((np.min(y)-ldx)*10)/10, np.ceil((np.max(y)+ldy)*10)/10 +ldy,ldy))
+        gridlines.xformatter = LONGITUDE_FORMATTER
+        gridlines.yformatter = LATITUDE_FORMATTER
         # Add color bar
         plt.clim(c1,c2)
         
