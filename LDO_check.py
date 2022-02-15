@@ -4,11 +4,12 @@ from obspy.clients.fdsn import Client
 import matplotlib.pyplot as plt
 import numpy as np
 from obspy.core import UTCDateTime
+from obspy import read
 import datetime as datetime
 import sys
 import argparse
 import copy
-
+import os
 
 def get_loc_list(sta):
     chanlist=[]
@@ -51,7 +52,7 @@ parser.add_argument("-r", action="store", dest="Rad",
                     default=20, help="Option to specify radius (in degrees) from individual station when using the -n and -s flags (default is 3 degrees)")
 """
 parser.add_argument("-t1", action="store", dest="Time",
-                    default=999,  help="Start Time for analysis (default is two days before start time)")
+                    default=999,  help="Start Time for analysis (default is two days before end time)")
 parser.add_argument("-t2", action="store", dest="Time2",
                     default=999,  help="End Time for analysis (default is now)")
 
@@ -59,6 +60,7 @@ args = parser.parse_args()
 
 plotme=True
 writefile=True
+frommsd=False
 
 #net1=args.Net
 #sta1=args.Sta
@@ -94,7 +96,14 @@ except:
     print("No channels found for %s-%s-%s-%s %s"%(nets,stas,chans,Myloc,starttime.strftime("%Y-%m-%d %H:%M")))
     sys.exit()
 
-
+try:
+    fls = os.popen('ls -ld /msd/IU_ANMO')
+    if 'cannot' not in fls:
+        frommsd=True
+    #print(fls)
+except:
+    frommsd=False
+    
 #print(inventory)
 
 sncls=[]
@@ -119,9 +128,21 @@ for cnet in inventory:
                     
                     inv1=inventory.select(cnet.code, stat.code, loc, chans)
                     mychan=inv1[0][0][0].response
+                    #print(inv1[0][0][0])
+                    #print("/msd/%s_%s/%s/%s_%s*"%(cnet.code,stat.code,starttime.strftime("%Y/%j"),loc,inv1[0][0][0].code))
                     cfs=mychan.instrument_polynomial.coefficients
                     #print(cfs)
-                    st = client.get_waveforms(cnet.code, stat.code, loc, chans, starttime, endtime, attach_response=True)
+                    try:
+                        st = client.get_waveforms(cnet.code, stat.code, loc, chans, starttime, endtime, attach_response=True)
+                    except:
+                        
+                        if frommsd:
+                            try:
+                                st=read("/msd/%s_%s/%s/%s_%s*"%(cnet.code,stat.code,starttime.strftime("%Y/%j"),loc,inv1[0][0][0].code))
+                                print("Couldn't fetch %s-%s-%s-%s, loaded from /msd instead"%(cnet.code, stat.code, loc, chans))
+                            except:
+                                break
+                        
                     #st.merge(fill_value=0)
                     #st.trim(starttime=starttime, endtime=endtime,pad=True,fill_value=0)
                     # remove response and filter
@@ -143,7 +164,10 @@ for cnet in inventory:
                     
                    
                 except:
-                    print("Couldn't fetch %s-%s-%s-%s"%(cnet.code, stat.code, loc, chans))
+                    if frommsd:
+                        print("Couldn't fetch %s-%s-%s-%s, or load from /msd "%(cnet.code, stat.code, loc, chans))
+                    else:
+                        print("Couldn't fetch %s-%s-%s-%s"%(cnet.code, stat.code, loc, chans))
 if writefile:
     f.close()
 if plotme:
