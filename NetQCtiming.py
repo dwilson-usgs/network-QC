@@ -1,49 +1,20 @@
 #!/usr/bin/env python
 
 from obspy.clients.fdsn import Client
-#from mpl_toolkits.basemap import Basemap, maskoceans
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.mlab as ml
 from obspy.core import UTCDateTime
 import datetime as datetime
-#from scipy.interpolate import griddata, interp1d
-from scipy.interpolate import griddata
 from obspy.geodetics import gps2dist_azimuth
 import matplotlib
-from scipy import signal
-#from obspy.taup import TauPyModel
-#from scipy import signal as scisig
-#from obspy.signal import spectral_estimation as spec
-from matplotlib import cm
-#import pickle
-#import gc
-#from numba import jit
-from matplotlib.transforms import blended_transform_factory
-import matplotlib.patches as mpatches
-#from scipy.optimize import leastsq
-import cartopy.crs as ccrs
-import matplotlib.ticker as mticker
-import cartopy
-from cartopy import geodesic
-import shapely
-from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import argparse
 import copy
 from obspy.taup import TauPyModel
+from scipy import signal
+
+
 model = TauPyModel(model="iasp91")
 
-def process_stream(st):
-    st.detrend()
-    st.remove_response(output="ACC")
-    st.detrend()
-    st.filter('bandpass', freqmin=fmin, freqmax=fmax)
-    winl=int(np.floor(len(st.data)/24))
-    nn=[]
-    for n in range(23):
-        nn.append(np.std(st.data[n*winl:((n+2)*winl)-1]))
-    nn=np.asarray(nn)
-    return np.median(nn)
 
 def get_loc_list(sta):
     chanlist=[]
@@ -52,29 +23,6 @@ def get_loc_list(sta):
             chanlist.append(chan.location_code)
     return chanlist
 
-def get_meds(zn,zla,zlo,nsta=5):
-    # for each noise measure, compute ratio to median of nsta nearest stations
-    meds=[]
-    if nsta<len(zn):
-        tmpnsta=nsta
-    else:
-        tmpnsta=len(zn)-1
-        
-    for n in range(len(zn)):
-        tmpdists=[]
-        for m in range(len(zn)):
-            if m==n:
-                tmpdists.append(0.0)
-            else:
-                epi_dist, az, baz = gps2dist_azimuth(zla[n],zlo[n],zla[m],zlo[m])
-                tmpdists.append(epi_dist/1000.)
-        ii=np.argsort(tmpdists)
-        tmp2=[]
-        for m in range(tmpnsta+1):
-            tmp2.append(zn[ii[m]])
-        meds.append(zn[n]/np.median(tmp2))
-            
-    return meds
 
 def find_lag(y1, y2):
     
@@ -181,41 +129,10 @@ model = TauPyModel(model="iasp91")
 client = Client("IRIS")
 #client = Client("https://service.scedc.caltech.edu")
 
-###########
-# to check timing, grab events at a good range for P-wave arrivals,
-# use taup to get predicted arrivals, grab data, filter and
-# cross correlate to see if predicted arrivals difference matches.
-###########
-
-# time for station analysis
-#starttime = UTCDateTime("2021-01-21 00:00:00")
-#endtime = UTCDateTime("2021-01-21 23:59:00")
-#minlat=43.3
-#minlon=-75
-#maxlat=47
-#maxlon=-68.3
-#chans=['LHZ','LHN','LHE']
-#lat=37.6
-#lon=-84.6
-#dep = 6
-#rad=12
-#Vp=5
-#Vs=Vp/1.8
-
-#stas= "BO04,MT01,BO03,FAR1,MT10,AC04,GO04,GO04,ROC1,AFO1,LCO"
-#nets="US,N4"
-#stas = "*"
-#nets="IW"
-
-#chans="LH*"
-#chans="HHZ"
 
 plotsect=0
 debug = True
 
-#fmin=1/8.
-#fmax=1/4.
-#gwidth=300
 
 rsta=False
 if net1 != 999:

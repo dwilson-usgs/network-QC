@@ -167,8 +167,8 @@ Vs=Vp/1.8
 
 debug = True
 
-fmin=1/8.
-fmax=1/4.
+fmin=1/11.
+fmax=1/9.
 #gwidth=300
 
 
