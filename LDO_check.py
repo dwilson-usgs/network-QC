@@ -130,7 +130,7 @@ for cnet in inventory:
                     mychan=inv1[0][0][0].response
                     #print(inv1[0][0][0])
                     #print("/msd/%s_%s/%s/%s_%s*"%(cnet.code,stat.code,starttime.strftime("%Y/%j"),loc,inv1[0][0][0].code))
-                    cfs=mychan.instrument_polynomial.coefficients
+                    #cfs=mychan.instrument_polynomial.coefficients
                     #print(cfs)
                     try:
                         st = client.get_waveforms(cnet.code, stat.code, loc, chans, starttime, endtime, attach_response=True)
@@ -141,11 +141,23 @@ for cnet in inventory:
                                 st=read("/msd/%s_%s/%s/%s_%s*"%(cnet.code,stat.code,starttime.strftime("%Y/%j"),loc,inv1[0][0][0].code))
                                 print("Couldn't fetch %s-%s-%s-%s, loaded from /msd instead"%(cnet.code, stat.code, loc, chans))
                             except:
+                                print("Couldn't fetch %s-%s-%s-%s, or load from /msd "%(cnet.code, stat.code, loc, chans))
                                 break
                         
                     #st.merge(fill_value=0)
                     #st.trim(starttime=starttime, endtime=endtime,pad=True,fill_value=0)
                     # remove response and filter
+                    if mychan.instrument_polynomial:
+                        cfs=mychan.instrument_polynomial.coefficients
+                    else:
+                        
+                        print("%s-%s-%s-%s not a polynomial, sensitivity is %9.2f counts per %s"%(cnet.code, stat.code, loc, chans, mychan.instrument_sensitivity.value, mychan.instrument_sensitivity.input_units))
+                        if "kPa" in mychan.instrument_sensitivity.input_units:
+                            cfs=[0.,1000./mychan.instrument_sensitivity.value]
+                        else:
+                            cfs=[0.,1./mychan.instrument_sensitivity.value]
+
+                        
                     if len(st)>1:
                         print("warning, %i gaps for %s-%s-%s-%s"%(len(st),cnet.code, stat.code, loc, chans))
                     trstd=np.std(st[0].data)
@@ -164,10 +176,7 @@ for cnet in inventory:
                     
                    
                 except:
-                    if frommsd:
-                        print("Couldn't fetch %s-%s-%s-%s, or load from /msd "%(cnet.code, stat.code, loc, chans))
-                    else:
-                        print("Couldn't fetch %s-%s-%s-%s"%(cnet.code, stat.code, loc, chans))
+                    print("Couldn't process %s-%s-%s-%s"%(cnet.code, stat.code, loc, chans))
 if writefile:
     f.close()
 if plotme:
