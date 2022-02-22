@@ -31,19 +31,18 @@ def elv_cor(stel,stlat):
     P= P_b * np.exp( (-g0 * M * (hh - h_b)) / (R * T))
     return P_b - P
 
-parser = argparse.ArgumentParser(description='Fetch LDO channels and compute new LDO metric')
+parser = argparse.ArgumentParser(description='Fetch LDO channels and compare 30-LDO vs. 31-LDO')
 
 parser.add_argument("-nets", action="store", dest="Nets",
                     default="IU", help="Networks for analysis (default is IU)")
 parser.add_argument("-stas", action="store", dest="Stas",
                     default="*", help="Stations for analysis (default is *)")
+"""
 parser.add_argument("-chans", action="store", dest="Chans",
                     default="LDO", help="Channels for analysis (default is LDO)")
 parser.add_argument("-locs", action="store", dest="Locs",
                     default="30,31", help="location codes for analysis (default is *)")
 
-
-"""
 parser.add_argument("-n", action="store", dest="Net",
                     default=999, help="Option to specify an individual reference network. If your use this flag, you must also use the -s flag.")
 parser.add_argument("-s", action="store", dest="Sta",
@@ -68,8 +67,11 @@ frommsd=False
 #rad=args.Rad
 nets=args.Nets
 stas=args.Stas
-chans=args.Chans
-Myloc=args.Locs
+
+#chans=args.Chans
+#Myloc=args.Locs
+chans="LDO"
+Myloc="30,31"
 
 tt = args.Time
 tt2 = args.Time2
@@ -115,15 +117,19 @@ if writefile:
     f=open("LDO_out.csv","w+")
 ecor=11.897 # Pa/m
 Pa2atm=1/101325
+plt.figure(3)
+plt.plot([101325*.97, 101325*1.03],[101325*.97, 101325*1.03],'b--',label="1 to 1 line")
 print("Channel,  elevation, coef0, coef1, mean raw counts, Corrected Pressure (Pa), Pressure metric")
 for cnet in inventory:
     for stat in cnet:
         if 1:
             elv = stat.elevation
             
-            locs=get_loc_list(stat)
+            #locs=get_loc_list(stat)
             #print(stat.code,chan)
-            for loc in locs:
+            val30=[]
+            val31=[]
+            for loc in ["30","31"]:
                 
                 try:
                     
@@ -173,12 +179,22 @@ for cnet in inventory:
                     sncls.append("%s-%s-%s-%s"%(cnet.code,stat.code,loc,st[0].stats.channel))
                     #print("%s-%s-%s-%s, %5.1f, %5.3e, %5.3e, %5.3e, %5.3e, %5.3e,%5.2f"%(cnet.code,stat.code,loc,st[0].stats.channel,elv,cfs[0],cfs[1],trmean,cormean,trstd,err))
                     print("%s-%s-%s-%s, %5.1f, %5.3e, %5.3e, %5.3e, %5.3e, %5.2f"%(cnet.code,stat.code,loc,st[0].stats.channel,elv,cfs[0],cfs[1],trmean,cormean,err))
-                    if writefile:
-                        f.write("%s-%s,%s,%s, %5.1f, %5.3e, %5.3e, %5.3e, %5.3e, %5.2f \n"%(cnet.code,stat.code,loc,st[0].stats.channel,elv,cfs[0],cfs[1],trmean,cormean,err))
-                    
+                    #if writefile:
+                    #    f.write("%s-%s,%s,%s, %5.1f, %5.3e, %5.3e, %5.3e, %5.3e, %5.2f \n"%(cnet.code,stat.code,loc,st[0].stats.channel,elv,cfs[0],cfs[1],trmean,cormean,err))
+                    if "30" in loc:
+                        val30.append(cormean)
+                    else:
+                        val31.append(cormean)
                    
                 except:
                     print("Couldn't process %s-%s-%s-%s"%(cnet.code, stat.code, loc, chans))
+            if len(val30) > 0 and len(val31) > 0:
+                if writefile:
+                        f.write("%s-%s, %5.1f, %5.3f \n"%(cnet.code,stat.code,elv,val31[0]/val30[0]))
+                if val30[0]/val31[0] > 1.005 or val31[0]/val30[0] > 1.005:
+                    plt.plot(val30[0],val31[0],'o',label=stat.code)
+                else:
+                    plt.plot(val30[0],val31[0],'ko')
 if writefile:
     f.close()
 if plotme:
@@ -193,22 +209,30 @@ if plotme:
     plt.legend()
     plt.title('%s-%s-%s-%s %s-%s'%(nets,stas,chans,Myloc,starttime.strftime("%Y %m/%d"),endtime.strftime("%m/%d")))
     #plt.show()
-    if (np.max(lats)-np.min(lats) ) > 45:
-        plt.figure(2)
-        plt.plot(lats,cormeans,'ko')
-        plt.plot([-90,90],[101325, 101325],'b--',label="1 atm")
-        plt.plot([-60,-60],[101325*.99, 101325*1.01],'g:',label="lows")
-        plt.plot([0,0],[101325*.99, 101325*1.01],'g:')
-        plt.plot([60,60],[101325*.99, 101325*1.01],'g:')
-        plt.plot([-30,-30],[101325*.99, 101325*1.01],'r:',label="highs")
-        plt.plot([30,30],[101325*.99, 101325*1.01],'r:')
-        for nn in range(len(errs)):
-            if cormeans[nn] < 97000 or cormeans[nn]>104000:
-                plt.plot(lats[nn],cormeans[nn], 'o',label=sncls[nn])
-        plt.xlabel('latitude')
-        plt.ylabel('Corrected Pressure (Pa)')
-        plt.legend()
-        plt.title('%s-%s-%s-%s %s-%s'%(nets,stas,chans,Myloc,starttime.strftime("%Y %m/%d"),endtime.strftime("%m/%d")))
+    plt.figure(2)
+    plt.plot(lats,cormeans,'ko')
+    plt.plot([-90,90],[101325, 101325],'b--',label="1 atm")
+    plt.plot([-60,-60],[101325*.99, 101325],'g:',label="predicted lows")
+    plt.plot([0,0],[101325*.99, 101325],'g:')
+    plt.plot([60,60],[101325*.99, 101325],'g:')
+    plt.plot([-30,-30],[101325, 101325*1.01],'r:',label="predicted highs")
+    plt.plot([30,30],[101325, 101325*1.01],'r:')
+    for nn in range(len(errs)):
+        if cormeans[nn] < 97000 or cormeans[nn]>104000:
+            plt.plot(lats[nn],cormeans[nn], 'o',label=sncls[nn])
+    plt.xlabel('latitude')
+    plt.ylabel('Corrected Pressure (Pa)')
+    plt.legend()
+    plt.title('%s-%s-%s-%s %s-%s'%(nets,stas,chans,Myloc,starttime.strftime("%Y %m/%d"),endtime.strftime("%m/%d")))
+    plt.figure(3)
+    #plt.plot(cormeans,elevs,'ko')
+    
+    
+    plt.ylabel('Corrected 31-LDO Pressure (Pa)')
+    plt.xlabel('Corrected 30-LDO Pressure (Pa)')
+    plt.legend()
+    plt.title('%s-%s-%s-%s %s-%s'%(nets,stas,chans,Myloc,starttime.strftime("%Y %m/%d"),endtime.strftime("%m/%d")))
+    
     plt.show()
 
 
