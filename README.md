@@ -1,8 +1,12 @@
+## For the updated version of these codes visit here: https://code.usgs.gov/dwilson/network-QC
 # network-QC
 Python codes for seismic network QC
 
 These codes are the Python version of Matlab code found here:
 https://github.com/dwilson-usgs/temp-network-QC
+
+The accompanying manuscript is:
+David C. Wilson, Adam T. Ringler, Tyler L. Storm, Robert E. Anthony; Rapid Station and Network Quality Analysis for Temporary Deployments. Seismological Research Letters 2019;; 90 (4): 14941501. doi: https://doi.org/10.1785/0220180365
 
 There have also been improvements and additions to the Matlab version.
 
